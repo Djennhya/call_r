@@ -3,9 +3,12 @@ package tg.sanze_djenia.call_r
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
@@ -18,6 +21,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val REQUEST_PERMISSIONS = 1
+        const val TAG = "MainActivity"
     }
 
     private lateinit var startRecordingButton: Button
@@ -26,9 +30,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var playButton: Button
     private lateinit var pauseButton: Button
     private lateinit var stopButton: Button
+    private lateinit var deleteButton: Button
     private lateinit var recordingsAdapter: ArrayAdapter<String>
     private var mediaPlayer: MediaPlayer? = null
     private var isPaused = false
+    private var selectedRecording: String? = null
+    private var selectedView: View? = null
+
+    override fun onResume() {
+        super.onResume()
+        loadRecordings()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         playButton = findViewById(R.id.playButton)
         pauseButton = findViewById(R.id.pauseButton)
         stopButton = findViewById(R.id.stopButton)
+        deleteButton = findViewById(R.id.deleteButton)
 
         startRecordingButton.setOnClickListener {
             if (checkPermissions()) {
@@ -52,16 +65,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         playButton.setOnClickListener {
-            if (isPaused) {
-                mediaPlayer?.start()
-                pauseButton.visibility = Button.VISIBLE
-                stopButton.visibility = Button.VISIBLE
-                playButton.visibility = Button.GONE
-                isPaused = false
-            } else {
-                val selectedItem = recordingsListView.selectedItem as String?
-                selectedItem?.let { playRecording(it) }
-            }
+            selectedRecording?.let { playRecording(it) }
         }
 
         pauseButton.setOnClickListener {
@@ -73,13 +77,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         stopButton.setOnClickListener {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-            mediaPlayer = null
+            stopPlayback()
+        }
+
+        deleteButton.setOnClickListener {
+            selectedRecording?.let { deleteRecording(it) }
+        }
+
+        recordingsListView.setOnItemClickListener { _, view, position, _ ->
+            selectedView?.setBackgroundColor(Color.TRANSPARENT) // Reset previous selection
+            selectedRecording = recordingsAdapter.getItem(position)
+            selectedView = view
+            view.setBackgroundColor(Color.LTGRAY) // Highlight selected item
             playButton.visibility = Button.VISIBLE
             pauseButton.visibility = Button.GONE
             stopButton.visibility = Button.GONE
-            isPaused = false
+            deleteButton.visibility = Button.VISIBLE
         }
 
         requestPermissions()
@@ -134,27 +147,69 @@ class MainActivity : AppCompatActivity() {
     private fun loadRecordings() {
         val recordingsDir = Environment.getExternalStorageDirectory().path
         val recordings = File(recordingsDir).listFiles { _, name ->
-            name.startsWith("recording_") && name.endsWith(".3gp")
-        }?.map { it.name } ?: emptyList()
+            name.startsWith("Recording...") && name.endsWith(".3gp")
+        }?.map { it.name.removePrefix("Recording...") } ?: emptyList()
 
         recordingsAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, recordings)
         recordingsListView.adapter = recordingsAdapter
     }
 
     private fun playRecording(recording: String) {
-        val filePath = "${Environment.getExternalStorageDirectory().path}/$recording"
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(filePath)
-            prepare()
-            start()
+        stopPlayback()  // Stop any ongoing playback
+
+        val filePath = "${Environment.getExternalStorageDirectory().path}/Recording...$recording"
+        try {
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(filePath)
+                prepare()
+                start()
+                setOnCompletionListener {
+                    stopPlayback()
+                }
+            }
+            playButton.visibility = Button.GONE
+            pauseButton.visibility = Button.VISIBLE
+            stopButton.visibility = Button.VISIBLE
+        } catch (e: Exception) {
+            Log.e(TAG, "Error playing recording", e)
         }
-        playButton.visibility = Button.GONE
-        pauseButton.visibility = Button.VISIBLE
-        stopButton.visibility = Button.VISIBLE
+    }
+
+    private fun stopPlayback() {
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+            playButton.visibility = Button.VISIBLE
+            pauseButton.visibility = Button.GONE
+            stopButton.visibility = Button.GONE
+            deleteButton.visibility = if (selectedRecording != null) Button.VISIBLE else Button.GONE // Show delete button if a recording is selected
+            isPaused = false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error stopping playback", e)
+        }
+    }
+
+    private fun deleteRecording(recording: String) {
+        val filePath =  "${Environment.getExternalStorageDirectory().path}/$recording"
+        val file = File(filePath)
+        if (file.exists()) {
+            if (file.delete()) {
+                loadRecordings()
+                playButton.visibility = Button.GONE
+                pauseButton.visibility = Button.GONE
+                stopButton.visibility = Button.GONE
+                deleteButton.visibility = Button.GONE
+                selectedRecording = null
+                selectedView = null
+            } else {
+                Log.e(TAG, "Error deleting recording")
+            }
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayer?.release()
+        stopPlayback()
     }
 }
