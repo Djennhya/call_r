@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="18dp">
 
     <Button
         android:id="@+id/startRecordingButton"
@@ -21,15 +21,18 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp"
         android:text="Historique des appels"
-        android:textSize="18sp"
-        android:paddingTop="16dp" />
+        android:textSize="18sp" />
 
     <ListView
         android:id="@+id/recordingsListView"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:padding="10dp"
+        android:choiceMode="singleChoice" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -48,6 +51,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Pause"
+            android:layout_marginEnd="8dp"
             android:visibility="gone" />
 
         <Button
@@ -55,7 +59,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Stop"
+            android:layout_marginEnd="8dp"
             android:visibility="gone" />
+
+        <Button
+            android:id="@+id/deleteButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:layout_marginStart="8dp"
+            android:visibility="gone" />
+
+
     </LinearLayout>
 
 </LinearLayout>
