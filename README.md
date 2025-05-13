@@ -10,6 +10,6 @@ Voici une description possible pour votre projet **call_r** :
 
 Ce projet est conçu pour améliorer la gestion des appels tout en offrant une interface intuitive et efficace. 
 
-## Langages utilisés
+## Langage utilisé
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-0095D5?logo=kotlin&logoColor=white)
