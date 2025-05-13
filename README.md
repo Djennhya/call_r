@@ -9,3 +9,7 @@ Voici une description possible pour votre projet **call_r** :
 - Possibilité de marquer des contacts comme favoris pour un accès rapide et personnalisé.  
 
 Ce projet est conçu pour améliorer la gestion des appels tout en offrant une interface intuitive et efficace. 
+
+## Langages utilisés
+
+![Kotlin](https://img.shields.io/badge/Kotlin-0095D5?logo=kotlin&logoColor=white)
